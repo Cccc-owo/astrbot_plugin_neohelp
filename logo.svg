@@ -1,0 +1,29 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 整体容器，确保垂直居中 -->
+  <g transform="translate(25, 45)">
+    
+    <!-- NH 融合主体 -->
+    <!-- 蓝色笔画：N 的全部和 H 的右侧竖线 -->
+    <path d="M 0,80 V 0 L 75,80 V 0 M 150,0 V 80" 
+          fill="none" 
+          stroke="rgb(34, 136, 183)" 
+          stroke-width="20" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+
+    <!-- H 的横梁：纯白色点缀 -->
+    <path d="M 75,40 H 150" 
+          fill="none" 
+          stroke="#FFFFFF" 
+          stroke-width="16" 
+          stroke-linecap="round" />
+    
+    <!-- 底部短横线：增加稳定感 -->
+    <!-- 长度为 50，居中对齐 -->
+    <path d="M 50,115 H 100" 
+          fill="none" 
+          stroke="rgb(34, 136, 183)" 
+          stroke-width="12" 
+          stroke-linecap="round" />
+  </g>
+</svg>
