@@ -31,6 +31,7 @@ class CommandInfo:
     aliases: list[str] = field(default_factory=list)
     usage: str = ""
     admin_only: bool = False
+    custom_prefix: str | None = None  # None 表示使用全局唤醒前缀，"" 表示无前缀
 
 
 @dataclass
@@ -356,17 +357,27 @@ class CustomHelpPlugin(Star):
 
     @staticmethod
     def _parse_pipe_command(raw: str) -> CommandInfo | None:
-        """解析 '命令名|描述' 格式的字符串为 CommandInfo"""
+        """解析 '命令名|描述|前缀' 格式的字符串为 CommandInfo
+
+        前缀为可选第三段：省略则默认无前缀，填写则使用自定义前缀。
+        """
         if not isinstance(raw, str) or not raw.strip():
             return None
-        parts = raw.split("|", 1)
+        parts = raw.split("|")
         name = parts[0].strip()
         desc = parts[1].strip() if len(parts) > 1 else ""
+        custom_prefix = parts[2].strip() if len(parts) > 2 else ""
         if not name:
             return None
-        return CommandInfo(name=name, description=desc)
+        return CommandInfo(name=name, description=desc, custom_prefix=custom_prefix)
 
     # ==================== 渲染 ====================
+
+    @staticmethod
+    def _cmd_display_name(cmd: CommandInfo, prefix: str) -> str:
+        """生成命令的显示名称，拼接正确的前缀"""
+        p = prefix if cmd.custom_prefix is None else cmd.custom_prefix
+        return f"{p}{cmd.name}"
 
     def _get_footer(self) -> str:
         custom = getattr(self.config, "footer_text", "") or ""
@@ -446,7 +457,12 @@ class CustomHelpPlugin(Star):
                     "description": p.description,
                     "icon_url": p.icon_url,
                     "commands": [
-                        {"name": c.name, "description": c.description, "admin_only": c.admin_only} for c in p.commands
+                        {
+                            "display_name": self._cmd_display_name(c, prefix),
+                            "description": c.description,
+                            "admin_only": c.admin_only,
+                        }
+                        for c in p.commands
                     ],
                 }
                 for p in plugins
@@ -508,6 +524,8 @@ class CustomHelpPlugin(Star):
         template = _read_template("sub_menu.html", custom_dir)
         accent = self._get_accent_color()
 
+        prefix = self._get_wake_prefix()
+
         data = {
             "plugin": {
                 "name": target.name,
@@ -517,7 +535,7 @@ class CustomHelpPlugin(Star):
             },
             "commands": [
                 {
-                    "name": c.name,
+                    "display_name": self._cmd_display_name(c, prefix),
                     "description": c.description,
                     "aliases": c.aliases,
                     "usage": c.usage,
@@ -525,7 +543,7 @@ class CustomHelpPlugin(Star):
                 }
                 for c in target.commands
             ],
-            "prefix": self._get_wake_prefix(),
+            "prefix": prefix,
             "accent_color": accent,
             **self._get_font_config(),
             "footer": self._get_footer(),

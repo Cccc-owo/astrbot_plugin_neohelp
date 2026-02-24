@@ -264,7 +264,7 @@
     {% for cmd in commands %}
     <div class="cmd-item">
       <div class="cmd-header">
-        <span class="cmd-name">{{ prefix }}{{ cmd.name }}</span>
+        <span class="cmd-name">{{ cmd.display_name }}</span>
 
         <div class="tags-wrapper">
           {% if cmd.admin_only %}

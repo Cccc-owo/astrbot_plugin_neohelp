@@ -236,7 +236,7 @@
         {% for cmd in plugin.commands %}
         <div class="cmd-card">
           <div class="cmd-card-header">
-            <span class="cmd-card-name">{{ prefix }}{{ cmd.name }}</span>
+            <span class="cmd-card-name">{{ cmd.display_name }}</span>
             {% if cmd.admin_only %}
             <span class="cmd-card-admin">管理员</span>
             {% endif %}
