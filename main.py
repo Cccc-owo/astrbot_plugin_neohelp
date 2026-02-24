@@ -68,7 +68,16 @@ class PluginInfo:
             self.display_name = self.name
 
 
-def _read_template(name: str) -> str:
+def _read_template(name: str, data_dir: Path | None = None) -> str:
+    """读取模板文件，开启自定义模板时优先从数据目录加载"""
+    if data_dir:
+        custom_path = data_dir / name
+        if custom_path.is_file():
+            try:
+                with open(custom_path, encoding="utf-8") as f:
+                    return f.read()
+            except Exception as e:
+                logger.warning(f"读取自定义模板失败 {custom_path}: {e}，回退到默认模板")
     path = TEMPLATES_DIR / name
     with open(path, encoding="utf-8") as f:
         return f.read()
@@ -428,7 +437,8 @@ class CustomHelpPlugin(Star):
 
         expand = getattr(self.config, "expand_commands", False)
         template_name = "expanded_menu.html" if expand else "main_menu.html"
-        template = _read_template(template_name)
+        custom_dir = self._data_dir / "custom_templates" if getattr(self.config, "custom_templates", False) else None
+        template = _read_template(template_name, custom_dir)
         accent = self._get_accent_color()
         prefix = self._get_wake_prefix()
         title = getattr(self.config, "title", "帮助菜单") or "帮助菜单"
@@ -501,7 +511,8 @@ class CustomHelpPlugin(Star):
             prefix = self._get_wake_prefix()
             return event.plain_result(f"未找到插件「{query}」，请发送 {prefix}help 查看所有可用插件。")
 
-        template = _read_template("sub_menu.html")
+        custom_dir = self._data_dir / "custom_templates" if getattr(self.config, "custom_templates", False) else None
+        template = _read_template("sub_menu.html", custom_dir)
         accent = self._get_accent_color()
 
         data = {

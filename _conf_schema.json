@@ -38,6 +38,12 @@
         "hint": "开启后 /help 直接显示所有插件的命令列表，关闭时显示插件卡片概览",
         "default": false
     },
+    "custom_templates": {
+        "description": "使用自定义模板",
+        "type": "bool",
+        "hint": "开启后优先从插件数据目录的 custom_templates 子目录加载同名模板，找不到则回退默认",
+        "default": false
+    },
     "plugin_overrides": {
         "description": "插件显示覆盖",
         "type": "template_list",
