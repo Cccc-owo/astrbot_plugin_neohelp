@@ -33,11 +33,10 @@
   .banner {
     position: relative;
     width: 100%;
-    height: 140px;
-    padding: 30px 28px;
+    padding: 24px 28px 30px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    align-items: center;
     {% if banner_image %}
     background: url('{{ banner_image }}') center/cover no-repeat;
     {% else %}
@@ -53,7 +52,21 @@
     pointer-events: none;
   }
 
-  .banner-content { position: relative; z-index: 2; }
+  .banner-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .banner-logo {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+  }
 
   .banner-title h1 {
     font-size: 28px;
@@ -84,37 +97,45 @@
 
   .section-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
     margin-bottom: 12px;
-    padding-bottom: 8px;
+    padding-bottom: 10px;
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
 
   .section-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     object-fit: cover;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.1);
     flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .section-text {
+    flex: 1;
+    min-width: 0;
   }
 
   .section-name {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     color: #fff;
+    line-height: 1.3;
+    margin-bottom: 2px;
   }
 
   .section-desc {
     font-size: 11px;
     color: var(--text-secondary);
-    flex: 1;
-    min-width: 0;
-    white-space: nowrap;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   /* ===== 命令网格 ===== */
@@ -131,13 +152,12 @@
     padding: 10px 10px 8px;
     display: flex;
     flex-direction: column;
-    min-height: 0;
   }
 
   .cmd-card-header {
     display: flex;
-    align-items: center;
-    gap: 6px;
+    align-items: flex-start;
+    gap: 4px;
     margin-bottom: 4px;
   }
 
@@ -146,9 +166,8 @@
     font-weight: 700;
     color: var(--accent);
     font-family: var(--font-mono);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: break-all;
+    line-height: 1.3;
   }
 
   .cmd-card-admin {
@@ -160,16 +179,13 @@
     border-radius: 3px;
     font-weight: 700;
     flex-shrink: 0;
+    margin-top: 1px;
   }
 
   .cmd-card-desc {
     font-size: 10px;
     color: var(--text-secondary);
     line-height: 1.4;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
   }
 
   /* ===== 底部 ===== */
@@ -188,6 +204,9 @@
 <body>
   <div class="banner">
     <div class="banner-content">
+      {% if header_logo %}
+      <img class="banner-logo" src="{{ header_logo }}" alt="">
+      {% endif %}
       <div class="banner-title">
         <h1>{{ title }}</h1>
       </div>
@@ -200,10 +219,12 @@
     <div class="plugin-section">
       <div class="section-header">
         <img class="section-icon" src="{{ plugin.icon_url }}" alt="">
-        <span class="section-name">{{ plugin.display_name }}</span>
-        {% if plugin.description %}
-        <span class="section-desc">{{ plugin.description }}</span>
-        {% endif %}
+        <div class="section-text">
+          <div class="section-name">{{ plugin.display_name }}</div>
+          {% if plugin.description %}
+          <div class="section-desc">{{ plugin.description }}</div>
+          {% endif %}
+        </div>
       </div>
 
       <div class="cmd-grid">

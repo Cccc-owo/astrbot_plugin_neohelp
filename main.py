@@ -21,6 +21,7 @@ PLUGIN_DIR = Path(__file__).parent
 TEMPLATES_DIR = PLUGIN_DIR / "templates"
 RESOURCES_DIR = PLUGIN_DIR / "resources"
 DEFAULT_ICON_PATH = RESOURCES_DIR / "default_icon.webp"
+DEFAULT_LOGO_PATH = PLUGIN_DIR / "logo.svg"
 
 # 内置命令定义
 BUILTIN_COMMANDS = [
@@ -391,6 +392,18 @@ class CustomHelpPlugin(Star):
             banner_path = self._data_dir / banner_path
         return _read_image_as_data_uri(banner_path)
 
+    def _get_header_logo_uri(self) -> str:
+        """获取顶部 Logo 的 data URI，优先使用配置，否则使用插件自带 logo.svg"""
+        logo_path_str = getattr(self.config, "header_logo", "") or ""
+        if logo_path_str:
+            logo_path = Path(logo_path_str)
+            if not logo_path.is_absolute():
+                logo_path = self._data_dir / logo_path
+            uri = _read_image_as_data_uri(logo_path)
+            if uri:
+                return uri
+        return _read_image_as_data_uri(DEFAULT_LOGO_PATH)
+
     def _get_font_config(self) -> dict:
         """获取自定义字体配置"""
         font_url = (getattr(self.config, "font_url", "") or "").strip()
@@ -445,6 +458,7 @@ class CustomHelpPlugin(Star):
             "subtitle": subtitle,
             "accent_color": accent,
             "banner_image": self._get_banner_data_uri(),
+            "header_logo": self._get_header_logo_uri(),
             **self._get_font_config(),
             "plugins": plugins_data,
             "footer": self._get_footer(),

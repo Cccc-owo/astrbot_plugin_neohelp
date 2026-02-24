@@ -135,6 +135,12 @@
         "hint": "相对于插件数据目录（data/plugin_data/astrbot_plugin_neohelp/），如 banner.png",
         "default": ""
     },
+    "header_logo": {
+        "description": "顶部 Logo 图片文件名",
+        "type": "string",
+        "hint": "展开模式下显示于 Banner 顶部居中，留空使用插件自带 logo.svg。相对于插件数据目录",
+        "default": ""
+    },
     "footer_text": {
         "description": "底部自定义文字",
         "type": "string",
