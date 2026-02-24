@@ -1,24 +1,28 @@
+import asyncio
 import contextlib
 import os
 import tempfile
+from pathlib import Path
 
 from jinja2 import Template
 from playwright.async_api import async_playwright
 
 _browser = None
 _playwright_instance = None
+_lock = asyncio.Lock()
 
 
 async def _get_browser():
     """懒加载复用浏览器实例"""
     global _browser, _playwright_instance
-    if _browser and _browser.is_connected():
+    async with _lock:
+        if _browser and _browser.is_connected():
+            return _browser
+        _playwright_instance = await async_playwright().start()
+        _browser = await _playwright_instance.chromium.launch(
+            args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"],
+        )
         return _browser
-    _playwright_instance = await async_playwright().start()
-    _browser = await _playwright_instance.chromium.launch(
-        args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"],
-    )
-    return _browser
 
 
 async def render_template(tmpl_str: str, data: dict) -> bytes:
@@ -34,7 +38,7 @@ async def render_template(tmpl_str: str, data: dict) -> bytes:
         browser = await _get_browser()
         page = await browser.new_page(device_scale_factor=2)
         try:
-            await page.goto(f"file://{tmp_path}", wait_until="networkidle")
+            await page.goto(Path(tmp_path).as_uri(), wait_until="networkidle")
             # 等待网络字体加载完成
             await page.evaluate("() => document.fonts.ready")
             # 用 JS 获取完整内容尺寸，避免截断

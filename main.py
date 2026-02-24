@@ -398,26 +398,36 @@ class CustomHelpPlugin(Star):
             return "#d4b163"
         return color
 
+    def _resolve_data_path(self, raw: str) -> Path | None:
+        """将相对路径解析到数据目录，校验不越界，返回 None 表示非法"""
+        p = Path(raw)
+        if not p.is_absolute():
+            p = self._data_dir / p
+        resolved = p.resolve()
+        if not resolved.is_relative_to(self._data_dir.resolve()):
+            logger.warning(f"路径越界，已拒绝: {raw}")
+            return None
+        return resolved
+
     def _get_banner_data_uri(self) -> str:
         """读取 Banner 背景图，路径相对于插件数据目录"""
         banner_path_str = getattr(self.config, "banner_image", "") or ""
         if not banner_path_str:
             return ""
-        banner_path = Path(banner_path_str)
-        if not banner_path.is_absolute():
-            banner_path = self._data_dir / banner_path
+        banner_path = self._resolve_data_path(banner_path_str)
+        if not banner_path:
+            return ""
         return _read_image_as_data_uri(banner_path)
 
     def _get_header_logo_uri(self) -> str:
         """获取顶部 Logo 的 data URI，优先使用配置，否则使用插件自带 logo.svg"""
         logo_path_str = getattr(self.config, "header_logo", "") or ""
         if logo_path_str:
-            logo_path = Path(logo_path_str)
-            if not logo_path.is_absolute():
-                logo_path = self._data_dir / logo_path
-            uri = _read_image_as_data_uri(logo_path)
-            if uri:
-                return uri
+            logo_path = self._resolve_data_path(logo_path_str)
+            if logo_path:
+                uri = _read_image_as_data_uri(logo_path)
+                if uri:
+                    return uri
         return _read_image_as_data_uri(DEFAULT_LOGO_PATH)
 
     def _get_font_config(self) -> dict:
