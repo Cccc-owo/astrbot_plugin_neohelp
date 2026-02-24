@@ -1,0 +1,108 @@
+{
+    "title": {
+        "description": "帮助菜单标题",
+        "type": "string",
+        "default": "帮助菜单"
+    },
+    "subtitle": {
+        "description": "帮助菜单副标题",
+        "type": "string",
+        "default": "发送 /help <插件名> 查看详细命令"
+    },
+    "accent_color": {
+        "description": "强调色（十六进制颜色值，如 #d4b163）",
+        "type": "string",
+        "default": "#d4b163"
+    },
+    "show_builtin_cmds": {
+        "description": "是否显示 AstrBot 内置命令",
+        "type": "bool",
+        "default": false
+    },
+    "plugin_blacklist": {
+        "description": "不显示的插件列表（填写插件标识名，区分大小写）",
+        "type": "list",
+        "default": []
+    },
+    "plugin_overrides": {
+        "description": "插件显示覆盖（修改自动扫描到的插件的显示名、描述、排序等）",
+        "type": "template_list",
+        "default": [],
+        "templates": {
+            "override": {
+                "name": "插件覆盖",
+                "hint": "覆盖某个已安装插件的显示信息",
+                "items": {
+                    "plugin_name": {
+                        "description": "插件标识名（必须与实际插件名一致）",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "display_name": {
+                        "description": "自定义显示名（留空则不覆盖）",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "description": {
+                        "description": "自定义描述（留空则不覆盖）",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "order": {
+                        "description": "排序权重（越小越靠前，默认 99）",
+                        "type": "int",
+                        "default": 99
+                    },
+                    "extra_commands": {
+                        "description": "额外命令（格式：命令名|描述，每行一个）",
+                        "type": "list",
+                        "default": []
+                    }
+                }
+            }
+        }
+    },
+    "custom_categories": {
+        "description": "自定义分类（用于添加非 AstrBot 插件的外部命令）",
+        "type": "template_list",
+        "default": [],
+        "templates": {
+            "category": {
+                "name": "自定义分类",
+                "hint": "添加一个自定义命令分类，用于展示非插件的外部服务命令",
+                "items": {
+                    "name": {
+                        "description": "分类名称",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "description": {
+                        "description": "分类描述",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "order": {
+                        "description": "排序权重（越小越靠前）",
+                        "type": "int",
+                        "default": 50
+                    },
+                    "commands": {
+                        "description": "命令列表（格式：命令名|描述，每行一个）",
+                        "type": "list",
+                        "default": []
+                    }
+                }
+            }
+        }
+    },
+    "banner_image": {
+        "description": "主菜单顶部 Banner 背景图（留空使用默认渐变）",
+        "type": "file",
+        "default": ""
+    },
+    "footer_text": {
+        "description": "底部自定义文字（留空显示默认版本信息）",
+        "type": "string",
+        "default": ""
+    }
+}

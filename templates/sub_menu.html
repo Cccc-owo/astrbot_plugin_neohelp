@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 500px;
+    font-family: "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: linear-gradient(180deg, #0d1117 0%, #111820 100%);
+    color: #e6edf3;
+    padding: 28px 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== 插件头部 ===== */
+  .plugin-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .plugin-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+  }
+
+  .plugin-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .plugin-info h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f0f6fc;
+    margin-bottom: 2px;
+  }
+
+  .plugin-id {
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    font-family: "Consolas", "Monaco", monospace;
+  }
+
+  .plugin-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  /* ===== 返回提示 ===== */
+  .back-hint {
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .back-hint .arrow {
+    color: {{ accent_color }};
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .back-hint code {
+    color: {{ accent_color }};
+    background: {{ accent_color }}12;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 10.5px;
+  }
+
+  /* ===== 命令列表 ===== */
+  .commands {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .cmd-item {
+    padding: 12px 14px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cmd-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: {{ accent_color }};
+    opacity: 0.5;
+    border-radius: 3px 0 0 3px;
+  }
+
+  .cmd-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+
+  .cmd-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: {{ accent_color }};
+    font-family: "Consolas", "Monaco", "Noto Sans SC", monospace;
+    letter-spacing: 0.3px;
+  }
+
+  .cmd-aliases {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .alias-tag {
+    font-size: 9px;
+    color: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.05);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: "Consolas", "Monaco", "Noto Sans SC", monospace;
+  }
+
+  .admin-tag {
+    font-size: 9px;
+    color: #f97583;
+    background: rgba(249,117,131,0.1);
+    border: 1px solid rgba(249,117,131,0.2);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .cmd-desc {
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.5;
+    padding-left: 2px;
+  }
+
+  .cmd-usage {
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.25);
+    margin-top: 6px;
+    font-family: "Consolas", "Monaco", "Noto Sans SC", monospace;
+    background: rgba(0,0,0,0.25);
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+
+  /* ===== 空状态 ===== */
+  .empty {
+    text-align: center;
+    padding: 30px 0;
+    color: rgba(255,255,255,0.2);
+    font-size: 12px;
+  }
+
+  /* ===== 底部信息 ===== */
+  .footer {
+    text-align: center;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .footer-text {
+    font-size: 10px;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+  <div class="plugin-header">
+    <img class="plugin-icon" src="{{ plugin.icon_url }}" alt="">
+    <div class="plugin-info">
+      <h1>{{ plugin.display_name }}</h1>
+      {% if plugin.name != plugin.display_name %}
+      <div class="plugin-id">{{ plugin.name }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if plugin.description %}
+  <div class="plugin-desc">{{ plugin.description }}</div>
+  {% endif %}
+
+  <div class="back-hint">
+    <span class="arrow">&larr;</span> 发送 <code>/help</code> 返回主菜单
+  </div>
+
+  {% if commands %}
+  <div class="commands">
+    {% for cmd in commands %}
+    <div class="cmd-item">
+      <div class="cmd-top">
+        <span class="cmd-name">/{{ cmd.name }}</span>
+        {% if cmd.admin_only %}
+        <span class="admin-tag">管理员</span>
+        {% endif %}
+        {% if cmd.aliases %}
+        <div class="cmd-aliases">
+          {% for alias in cmd.aliases %}
+          <span class="alias-tag">{{ alias }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% if cmd.description %}
+      <div class="cmd-desc">{{ cmd.description }}</div>
+      {% endif %}
+      {% if cmd.usage %}
+      <div class="cmd-usage">{{ cmd.usage }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">该插件没有注册命令</div>
+  {% endif %}
+
+  <div class="footer">
+    <span class="footer-text">{{ footer }}</span>
+  </div>
+</body>
+</html>
