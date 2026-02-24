@@ -41,12 +41,13 @@ async def render_template(tmpl_str: str, data: dict) -> bytes:
             await page.goto(Path(tmp_path).as_uri(), wait_until="networkidle")
             # 等待网络字体加载完成
             await page.evaluate("() => document.fonts.ready")
-            # 用 JS 获取完整内容尺寸，避免截断
+            # 宽度取 body CSS 设定值，高度取实际内容高度
             dimensions = await page.evaluate(
                 """() => {
                     const body = document.body;
+                    const style = getComputedStyle(body);
                     return {
-                        width: body.scrollWidth,
+                        width: parseInt(style.width) || body.scrollWidth,
                         height: body.scrollHeight
                     };
                 }"""

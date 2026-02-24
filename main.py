@@ -23,27 +23,6 @@ RESOURCES_DIR = PLUGIN_DIR / "resources"
 DEFAULT_ICON_PATH = RESOURCES_DIR / "default_icon.webp"
 DEFAULT_LOGO_PATH = RESOURCES_DIR / "logo.svg"
 
-# 内置命令定义
-BUILTIN_COMMANDS = [
-    {"name": "t2i", "desc": "开关文本转图片"},
-    {"name": "tts", "desc": "开关文本转语音"},
-    {"name": "sid", "desc": "获取会话 ID"},
-    {"name": "op", "desc": "管理员操作", "admin": True},
-    {"name": "wl", "desc": "白名单管理", "admin": True},
-    {"name": "provider", "desc": "大模型提供商"},
-    {"name": "model", "desc": "模型列表"},
-    {"name": "ls", "desc": "对话列表"},
-    {"name": "new", "desc": "创建新对话"},
-    {"name": "switch", "desc": "切换对话", "usage": "/switch <序号>"},
-    {"name": "del", "desc": "删除当前会话对话", "admin": True},
-    {"name": "reset", "desc": "重置 LLM 会话", "admin": True},
-    {"name": "history", "desc": "当前对话的对话记录"},
-    {"name": "persona", "desc": "人格情景管理", "admin": True},
-    {"name": "tool", "desc": "函数工具管理"},
-    {"name": "key", "desc": "API Key 管理", "admin": True},
-    {"name": "websearch", "desc": "网页搜索"},
-]
-
 
 @dataclass
 class CommandInfo:
@@ -179,7 +158,7 @@ class CustomHelpPlugin(Star):
         if not skip_blacklist:
             blacklist = set(getattr(self.config, "plugin_blacklist", []) or [])
         blacklist.add(PLUGIN_NAME)
-        blacklist.add("astrbot")
+        show_builtin = getattr(self.config, "show_builtin_cmds", False)
 
         try:
             all_stars = self._ctx.get_all_stars()
@@ -200,6 +179,10 @@ class CustomHelpPlugin(Star):
 
             star_cls = getattr(star, "star_cls", None)
             if star_cls is self:
+                continue
+
+            # 过滤内置 star（reserved=True），除非开启了显示内置命令
+            if getattr(star, "reserved", False) and not show_builtin:
                 continue
 
             desc = getattr(star, "desc", None) or ""
@@ -226,26 +209,6 @@ class CustomHelpPlugin(Star):
 
         # 应用配置覆盖
         self._apply_overrides(plugins)
-
-        # 添加内置命令
-        if getattr(self.config, "show_builtin_cmds", False):
-            builtin = PluginInfo(
-                name="builtin",
-                display_name="内置命令",
-                description="AstrBot 内置系统命令",
-                icon_url=_get_default_icon_uri(),
-                order=0,
-            )
-            for cmd_def in BUILTIN_COMMANDS:
-                builtin.commands.append(
-                    CommandInfo(
-                        name=cmd_def["name"],
-                        description=cmd_def.get("desc", ""),
-                        usage=cmd_def.get("usage", ""),
-                        admin_only=cmd_def.get("admin", False),
-                    )
-                )
-            plugins["builtin"] = builtin
 
         # 添加自定义分类
         self._apply_custom_categories(plugins)
