@@ -21,7 +21,7 @@ PLUGIN_DIR = Path(__file__).parent
 TEMPLATES_DIR = PLUGIN_DIR / "templates"
 RESOURCES_DIR = PLUGIN_DIR / "resources"
 DEFAULT_ICON_PATH = RESOURCES_DIR / "default_icon.webp"
-DEFAULT_LOGO_PATH = PLUGIN_DIR / "logo.svg"
+DEFAULT_LOGO_PATH = RESOURCES_DIR / "logo.svg"
 
 # 内置命令定义
 BUILTIN_COMMANDS = [

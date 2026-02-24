@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.svg" width="120" height="120" alt="NeoHelp Logo">
+  <img src="resources/logo.svg" width="120" height="120" alt="NeoHelp Logo">
 </p>
 
 <h1 align="center">NeoHelp</h1>
