@@ -135,6 +135,15 @@ class CustomHelpPlugin(Star):
         admin_show_all = getattr(self.config, "admin_show_all", False)
         show_all = is_admin and (has_admin_flag or admin_show_all)
 
+        if getattr(self.config, "debug", False):
+            logger.info(
+                f"[NeoHelp] sender={event.get_sender_id()}, "
+                f"admins={self._ctx.get_config().get('admins_id', [])}, "
+                f"is_admin={is_admin}, has_admin_flag={has_admin_flag}, "
+                f"admin_show_all={admin_show_all}, show_all={show_all}, "
+                f"query={query!r}"
+            )
+
         if query:
             yield await self._render_sub_menu(event, query, show_all)
         else:
@@ -153,6 +162,7 @@ class CustomHelpPlugin(Star):
 
     def _collect_plugins(self, skip_blacklist: bool = False) -> list[PluginInfo]:
         """从已安装插件中自动收集命令信息"""
+        _debug = getattr(self.config, "debug", False)
         plugins: dict[str, PluginInfo] = {}
         blacklist: set[str] = set()
         if not skip_blacklist:
@@ -160,12 +170,22 @@ class CustomHelpPlugin(Star):
         blacklist.add(PLUGIN_NAME)
         show_builtin = getattr(self.config, "show_builtin_cmds", False)
 
+        if _debug:
+            logger.info(
+                f"[NeoHelp] _collect_plugins: skip_blacklist={skip_blacklist}, "
+                f"blacklist={blacklist}, show_builtin={show_builtin}"
+            )
+
         try:
             all_stars = self._ctx.get_all_stars()
             all_stars = [s for s in all_stars if s.activated]
         except Exception as e:
             logger.error(f"获取插件列表失败: {e}")
             return []
+
+        if _debug:
+            star_names = [f"{getattr(s, 'name', '?')}(reserved={getattr(s, 'reserved', '?')})" for s in all_stars]
+            logger.info(f"[NeoHelp] activated stars: {star_names}")
 
         # 收集插件基本信息
         star_modules: dict[str, str] = {}  # module_path -> plugin_name
