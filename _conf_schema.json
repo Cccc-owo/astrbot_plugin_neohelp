@@ -114,8 +114,9 @@
         "default": ""
     },
     "banner_image": {
-        "description": "主菜单顶部 Banner 背景图（留空使用默认渐变）",
-        "type": "file",
+        "description": "Banner 背景图文件名",
+        "type": "string",
+        "hint": "相对于插件数据目录（data/plugin_data/astrbot_plugin_neohelp/），如 banner.png",
         "default": ""
     },
     "footer_text": {

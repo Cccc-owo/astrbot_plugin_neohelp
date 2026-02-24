@@ -5,7 +5,7 @@ from pathlib import Path
 
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
-from astrbot.api.star import Context, Star, register
+from astrbot.api.star import Context, Star, StarTools, register
 from astrbot.core.config.astrbot_config import AstrBotConfig
 from astrbot.core.message.components import Image
 from astrbot.core.star.context import Context as FullContext
@@ -111,8 +111,9 @@ class CustomHelpPlugin(Star):
         super().__init__(context)
         self.config = config
         self._ctx: FullContext = context  # type: ignore[assignment]
-        # 插件目录的父目录即 data/plugins/
         self._plugins_base_dir = PLUGIN_DIR.parent
+        self._data_dir = StarTools.get_data_dir()
+        self._data_dir.mkdir(parents=True, exist_ok=True)
 
     async def terminate(self):
         """插件卸载时关闭浏览器"""
@@ -364,13 +365,13 @@ class CustomHelpPlugin(Star):
         return color
 
     def _get_banner_data_uri(self) -> str:
-        """读取 Banner 背景图配置"""
+        """读取 Banner 背景图，路径相对于插件数据目录"""
         banner_path_str = getattr(self.config, "banner_image", "") or ""
         if not banner_path_str:
             return ""
         banner_path = Path(banner_path_str)
         if not banner_path.is_absolute():
-            banner_path = PLUGIN_DIR / banner_path
+            banner_path = self._data_dir / banner_path
         return _read_image_as_data_uri(banner_path)
 
     def _get_font_config(self) -> dict:
