@@ -393,9 +393,9 @@ class CustomHelpPlugin(Star):
         return f"AstrBot{' v' + version if version else ''}"
 
     def _get_accent_color(self) -> str:
-        color = getattr(self.config, "accent_color", "#d4b163") or "#d4b163"
+        color = getattr(self.config, "accent_color", "#4e96f7") or "#4e96f7"
         if not color.startswith("#") or len(color) not in (4, 7):
-            return "#d4b163"
+            return "#4e96f7"
         return color
 
     def _resolve_data_path(self, raw: str) -> Path | None:
