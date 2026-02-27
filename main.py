@@ -100,6 +100,8 @@ def _get_default_icon_uri() -> str:
     "1.0.0",
 )
 class CustomHelpPlugin(Star):
+    # ==================== 生命周期 ====================
+
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self.config = config
@@ -116,6 +118,85 @@ class CustomHelpPlugin(Star):
         self._terminated = True
         self._image_cache.clear()
         await renderer.cleanup()
+
+    # ==================== 缓存 ====================
+
+    @staticmethod
+    def _cache_key(template_name: str, data: dict) -> str:
+        """根据模板名和数据内容生成缓存 key"""
+        raw = json.dumps(data, sort_keys=True, ensure_ascii=False, default=str)
+        h = hashlib.md5(raw.encode()).hexdigest()
+        return f"{template_name}:{h}"
+
+    async def _get_cached_or_render(self, template_name: str, template: str, data: dict) -> bytes:
+        """查缓存，命中直接返回；未命中则渲染并存入缓存"""
+        key = self._cache_key(template_name, data)
+        _debug = getattr(self.config, "debug", False)
+        cached = self._image_cache.get(key)
+        if cached is not None:
+            if _debug:
+                logger.info(f"[NeoHelp] cache hit: {template_name}")
+            return cached
+        if _debug:
+            logger.info(f"[NeoHelp] cache miss: {template_name}, rendering...")
+        img_bytes = await renderer.render_template(template, data)
+        self._image_cache[key] = img_bytes
+        return img_bytes
+
+    async def _preheat_cache(self):
+        """预热缓存（主菜单 + 所有子菜单，普通版 + 管理员版）"""
+        try:
+            for show_all in (False, True):
+                if self._terminated:
+                    return
+                await self._preheat_main_menu(show_all)
+
+            # 稍微延时后预热所有子菜单
+            await asyncio.sleep(1)
+            for show_all in (False, True):
+                if self._terminated:
+                    return
+                await self._preheat_sub_menus(show_all)
+
+            if not self._terminated:
+                logger.info(f"[NeoHelp] 缓存预热完成，共 {len(self._image_cache)} 项")
+        except Exception as e:
+            logger.warning(f"[NeoHelp] 缓存预热失败: {e}")
+
+    async def _preheat_main_menu(self, show_all: bool):
+        """预热单份主菜单缓存"""
+        plugins = self._collect_plugins(skip_blacklist=show_all)
+        plugins = [p for p in plugins if p.commands]
+        if not plugins:
+            return
+
+        expand = getattr(self.config, "expand_commands", False)
+        template_name = "expanded_menu.html" if expand else "main_menu.html"
+        custom_dir = self._data_dir / "custom_templates" if getattr(self.config, "custom_templates", False) else None
+        template = _read_template(template_name, custom_dir)
+        prefix = self._get_wake_prefix()
+
+        data = self._build_main_menu_data(plugins, prefix, expand)
+        await self._get_cached_or_render(template_name, template, data)
+
+    async def _preheat_sub_menus(self, show_all: bool):
+        """预热所有插件的子菜单缓存"""
+        plugins = self._collect_plugins(skip_blacklist=show_all)
+        plugins = [p for p in plugins if p.commands]
+        if not plugins:
+            return
+
+        custom_dir = self._data_dir / "custom_templates" if getattr(self.config, "custom_templates", False) else None
+        template = _read_template("sub_menu.html", custom_dir)
+        prefix = self._get_wake_prefix()
+
+        for p in plugins:
+            if self._terminated:
+                return
+            data = self._build_sub_menu_data(p, prefix)
+            await self._get_cached_or_render("sub_menu.html", template, data)
+
+    # ==================== 命令入口 ====================
 
     def _is_admin(self, event: AstrMessageEvent) -> bool:
         """判断消息发送者是否为 AstrBot 管理员"""
@@ -379,84 +460,7 @@ class CustomHelpPlugin(Star):
             return None
         return CommandInfo(name=name, description=desc, custom_prefix=custom_prefix)
 
-    # ==================== 缓存 ====================
-
-    @staticmethod
-    def _cache_key(template_name: str, data: dict) -> str:
-        """根据模板名和数据内容生成缓存 key"""
-        raw = json.dumps(data, sort_keys=True, ensure_ascii=False, default=str)
-        h = hashlib.md5(raw.encode()).hexdigest()
-        return f"{template_name}:{h}"
-
-    async def _get_cached_or_render(self, template_name: str, template: str, data: dict) -> bytes:
-        """查缓存，命中直接返回；未命中则渲染并存入缓存"""
-        key = self._cache_key(template_name, data)
-        _debug = getattr(self.config, "debug", False)
-        cached = self._image_cache.get(key)
-        if cached is not None:
-            if _debug:
-                logger.info(f"[NeoHelp] cache hit: {template_name}")
-            return cached
-        if _debug:
-            logger.info(f"[NeoHelp] cache miss: {template_name}, rendering...")
-        img_bytes = await renderer.render_template(template, data)
-        self._image_cache[key] = img_bytes
-        return img_bytes
-
-    async def _preheat_cache(self):
-        """预热缓存（主菜单 + 所有子菜单，普通版 + 管理员版）"""
-        try:
-            for show_all in (False, True):
-                if self._terminated:
-                    return
-                await self._preheat_main_menu(show_all)
-
-            # 稍微延时后预热所有子菜单
-            await asyncio.sleep(1)
-            for show_all in (False, True):
-                if self._terminated:
-                    return
-                await self._preheat_sub_menus(show_all)
-
-            if not self._terminated:
-                logger.info(f"[NeoHelp] 缓存预热完成，共 {len(self._image_cache)} 项")
-        except Exception as e:
-            logger.warning(f"[NeoHelp] 缓存预热失败: {e}")
-
-    async def _preheat_main_menu(self, show_all: bool):
-        """预热单份主菜单缓存"""
-        plugins = self._collect_plugins(skip_blacklist=show_all)
-        plugins = [p for p in plugins if p.commands]
-        if not plugins:
-            return
-
-        expand = getattr(self.config, "expand_commands", False)
-        template_name = "expanded_menu.html" if expand else "main_menu.html"
-        custom_dir = self._data_dir / "custom_templates" if getattr(self.config, "custom_templates", False) else None
-        template = _read_template(template_name, custom_dir)
-        prefix = self._get_wake_prefix()
-
-        data = self._build_main_menu_data(plugins, prefix, expand)
-        await self._get_cached_or_render(template_name, template, data)
-
-    async def _preheat_sub_menus(self, show_all: bool):
-        """预热所有插件的子菜单缓存"""
-        plugins = self._collect_plugins(skip_blacklist=show_all)
-        plugins = [p for p in plugins if p.commands]
-        if not plugins:
-            return
-
-        custom_dir = self._data_dir / "custom_templates" if getattr(self.config, "custom_templates", False) else None
-        template = _read_template("sub_menu.html", custom_dir)
-        prefix = self._get_wake_prefix()
-
-        for p in plugins:
-            if self._terminated:
-                return
-            data = self._build_sub_menu_data(p, prefix)
-            await self._get_cached_or_render("sub_menu.html", template, data)
-
-    # ==================== 渲染 ====================
+    # ==================== 渲染配置 ====================
 
     @staticmethod
     def _cmd_display_name(cmd: CommandInfo, prefix: str) -> str:
@@ -514,7 +518,13 @@ class CustomHelpPlugin(Star):
         font_url = (getattr(self.config, "font_url", "") or "").strip()
         font_family = (getattr(self.config, "font_family", "") or "").strip()
         mono_font_family = (getattr(self.config, "mono_font_family", "") or "").strip()
-        return {"font_url": font_url, "font_family": font_family, "mono_font_family": mono_font_family}
+        return {
+            "font_url": font_url,
+            "font_family": font_family,
+            "mono_font_family": mono_font_family,
+        }
+
+    # ==================== 数据构建与渲染 ====================
 
     def _build_main_menu_data(self, plugins: list[PluginInfo], prefix: str, expand: bool) -> dict:
         """构建主菜单模板数据"""
