@@ -404,16 +404,22 @@ class CustomHelpPlugin(Star):
         return img_bytes
 
     async def _preheat_cache(self):
-        """预热主菜单缓存（普通版 + 管理员版）"""
+        """预热缓存（主菜单 + 所有子菜单，普通版 + 管理员版）"""
         try:
             for show_all in (False, True):
                 if self._terminated:
                     return
                 await self._preheat_main_menu(show_all)
+
+            # 稍微延时后预热所有子菜单
+            await asyncio.sleep(1)
+            for show_all in (False, True):
+                if self._terminated:
+                    return
+                await self._preheat_sub_menus(show_all)
+
             if not self._terminated:
-                logger.info(
-                    f"[NeoHelp] 缓存预热完成，共 {len(self._image_cache)} 项"
-                )
+                logger.info(f"[NeoHelp] 缓存预热完成，共 {len(self._image_cache)} 项")
         except Exception as e:
             logger.warning(f"[NeoHelp] 缓存预热失败: {e}")
 
@@ -432,6 +438,23 @@ class CustomHelpPlugin(Star):
 
         data = self._build_main_menu_data(plugins, prefix, expand)
         await self._get_cached_or_render(template_name, template, data)
+
+    async def _preheat_sub_menus(self, show_all: bool):
+        """预热所有插件的子菜单缓存"""
+        plugins = self._collect_plugins(skip_blacklist=show_all)
+        plugins = [p for p in plugins if p.commands]
+        if not plugins:
+            return
+
+        custom_dir = self._data_dir / "custom_templates" if getattr(self.config, "custom_templates", False) else None
+        template = _read_template("sub_menu.html", custom_dir)
+        prefix = self._get_wake_prefix()
+
+        for p in plugins:
+            if self._terminated:
+                return
+            data = self._build_sub_menu_data(p, prefix)
+            await self._get_cached_or_render("sub_menu.html", template, data)
 
     # ==================== 渲染 ====================
 
@@ -541,6 +564,31 @@ class CustomHelpPlugin(Star):
             "footer": self._get_footer(),
         }
 
+    def _build_sub_menu_data(self, plugin: PluginInfo, prefix: str) -> dict:
+        """构建子菜单模板数据"""
+        return {
+            "plugin": {
+                "name": plugin.name,
+                "display_name": plugin.display_name,
+                "description": plugin.description,
+                "icon_url": plugin.icon_url,
+            },
+            "commands": [
+                {
+                    "display_name": self._cmd_display_name(c, prefix),
+                    "description": c.description,
+                    "aliases": c.aliases,
+                    "usage": c.usage,
+                    "admin_only": c.admin_only,
+                }
+                for c in plugin.commands
+            ],
+            "prefix": prefix,
+            "accent_color": self._get_accent_color(),
+            **self._get_font_config(),
+            "footer": self._get_footer(),
+        }
+
     async def _render_main_menu(self, event: AstrMessageEvent, show_all: bool = False):
         """渲染主菜单"""
         plugins = self._collect_plugins(skip_blacklist=show_all)
@@ -587,32 +635,8 @@ class CustomHelpPlugin(Star):
 
         custom_dir = self._data_dir / "custom_templates" if getattr(self.config, "custom_templates", False) else None
         template = _read_template("sub_menu.html", custom_dir)
-        accent = self._get_accent_color()
-
         prefix = self._get_wake_prefix()
-
-        data = {
-            "plugin": {
-                "name": target.name,
-                "display_name": target.display_name,
-                "description": target.description,
-                "icon_url": target.icon_url,
-            },
-            "commands": [
-                {
-                    "display_name": self._cmd_display_name(c, prefix),
-                    "description": c.description,
-                    "aliases": c.aliases,
-                    "usage": c.usage,
-                    "admin_only": c.admin_only,
-                }
-                for c in target.commands
-            ],
-            "prefix": prefix,
-            "accent_color": accent,
-            **self._get_font_config(),
-            "footer": self._get_footer(),
-        }
+        data = self._build_sub_menu_data(target, prefix)
 
         try:
             img_bytes = await self._get_cached_or_render("sub_menu.html", template, data)
