@@ -111,6 +111,9 @@ class CustomHelpPlugin(Star):
         self._data_dir.mkdir(parents=True, exist_ok=True)
         self._image_cache: dict[str, bytes] = {}
         self._terminated = False
+
+    async def initialize(self):
+        """插件完全加载后启动缓存预热"""
         asyncio.create_task(self._preheat_cache())
 
     async def terminate(self):
@@ -161,7 +164,8 @@ class CustomHelpPlugin(Star):
             if not self._terminated:
                 logger.info(f"[NeoHelp] 缓存预热完成，共 {len(self._image_cache)} 项")
         except Exception as e:
-            logger.warning(f"[NeoHelp] 缓存预热失败: {e}")
+            if not self._terminated:
+                logger.warning(f"[NeoHelp] 缓存预热失败: {e}")
 
     async def _preheat_main_menu(self, show_all: bool):
         """预热单份主菜单缓存"""
