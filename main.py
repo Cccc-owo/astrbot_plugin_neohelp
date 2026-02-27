@@ -317,8 +317,20 @@ class CustomHelpPlugin(Star):
             star_modules[module_path] = name
 
         # 遍历 handler 注册表，收集命令
+        # 第一遍：收集命令组中子 handler 的 id，防止后续作为独立命令重复添加
+        grouped_handler_ids: set[int] = set()
         for handler in star_handlers_registry:
             if not isinstance(handler, StarHandlerMetadata):
+                continue
+            for f in handler.event_filters:
+                if isinstance(f, CommandGroupFilter):
+                    self._collect_group_handler_ids(f, grouped_handler_ids)
+
+        # 第二遍：提取命令，跳过已被命令组收录的子 handler
+        for handler in star_handlers_registry:
+            if not isinstance(handler, StarHandlerMetadata):
+                continue
+            if id(handler) in grouped_handler_ids:
                 continue
             plugin_name = star_modules.get(handler.handler_module_path)
             if not plugin_name or plugin_name not in plugins:
@@ -368,6 +380,15 @@ class CustomHelpPlugin(Star):
                 )
         elif group_filter:
             self._extract_group_commands(group_filter, handler, plugin, is_admin, prefix="")
+
+    @staticmethod
+    def _collect_group_handler_ids(group: CommandGroupFilter, ids: set[int]):
+        """递归收集命令组中所有子 handler 的 id"""
+        for sub in group.sub_command_filters:
+            if isinstance(sub, CommandFilter) and sub.handler_md:
+                ids.add(id(sub.handler_md))
+            elif isinstance(sub, CommandGroupFilter):
+                CustomHelpPlugin._collect_group_handler_ids(sub, ids)
 
     def _extract_group_commands(
         self,
