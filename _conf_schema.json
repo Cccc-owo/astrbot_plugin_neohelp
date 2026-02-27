@@ -57,28 +57,33 @@
                 "hint": "覆盖某个已安装插件的显示信息",
                 "items": {
                     "plugin_name": {
-                        "description": "插件标识名（必须与实际插件名一致）",
+                        "description": "插件标识名",
                         "type": "string",
+                        "hint": "必须与实际插件名一致",
                         "default": ""
                     },
                     "display_name": {
-                        "description": "自定义显示名（留空则不覆盖）",
+                        "description": "自定义显示名",
                         "type": "string",
+                        "hint": "留空则不覆盖",
                         "default": ""
                     },
                     "description": {
-                        "description": "自定义描述（留空则不覆盖）",
+                        "description": "自定义描述",
                         "type": "string",
+                        "hint": "留空则不覆盖",
                         "default": ""
                     },
                     "order": {
-                        "description": "排序权重（越小越靠前，默认 99 表示按字母序排列，设为其他值则强制排序）",
+                        "description": "排序权重",
                         "type": "int",
+                        "hint": "越小越靠前，默认 99 表示按字母序排列，设为其他值则强制排序",
                         "default": 99
                     },
                     "extra_commands": {
-                        "description": "额外命令（格式：命令名|描述|前缀，前缀可选，默认无前缀）",
+                        "description": "额外命令",
                         "type": "list",
+                        "hint": "格式：命令名|描述|前缀，前缀可选，默认无前缀",
                         "default": []
                     }
                 }
@@ -106,13 +111,15 @@
                         "default": ""
                     },
                     "order": {
-                        "description": "排序权重（越小越靠前，默认 99 表示按字母序排列，设为其他值则强制排序）",
+                        "description": "排序权重",
                         "type": "int",
+                        "hint": "越小越靠前，默认 99 表示按字母序排列，设为其他值则强制排序",
                         "default": 99
                     },
                     "commands": {
-                        "description": "命令列表（格式：命令名|描述|前缀，前缀可选，默认无前缀）",
+                        "description": "命令列表",
                         "type": "list",
+                        "hint": "格式：命令名|描述|前缀，前缀可选，默认无前缀",
                         "default": []
                     }
                 }
