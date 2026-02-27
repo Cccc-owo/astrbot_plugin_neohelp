@@ -148,6 +148,7 @@ class CustomHelpPlugin(Star):
 
     async def _preheat_cache(self):
         """预热缓存（主菜单 + 所有子菜单，普通版 + 管理员版）"""
+        logger.info("[NeoHelp] 开始缓存预热...")
         try:
             for show_all in (False, True):
                 if self._terminated:
