@@ -94,35 +94,37 @@ class CustomHelpPlugin(Star):
         # 加 key 级别锁，防止并发重复渲染
         lock = self._render_locks.setdefault(key, asyncio.Lock())
         async with lock:
-            # double-check：拿到锁后再查一次缓存
-            if self._disk_cache:
-                cache_file = self._disk_cache_path(key)
-                try:
-                    if cache_file.is_file():
-                        content = cache_file.read_bytes()
-                        if content:
-                            return content
-                except OSError:
-                    pass
-            else:
-                cached = self._image_cache.get(key)
-                if cached is not None:
-                    return cached
+            try:
+                # double-check：拿到锁后再查一次缓存
+                if self._disk_cache:
+                    cache_file = self._disk_cache_path(key)
+                    try:
+                        if cache_file.is_file():
+                            content = cache_file.read_bytes()
+                            if content:
+                                return content
+                    except OSError:
+                        pass
+                else:
+                    cached = self._image_cache.get(key)
+                    if cached is not None:
+                        return cached
 
-            if _debug:
-                logger.info(f"[NeoHelp] cache miss: {template_name}, rendering...")
-            img_bytes = await renderer.render_template(template, data)
+                if _debug:
+                    logger.info(f"[NeoHelp] cache miss: {template_name}, rendering...")
+                img_bytes = await renderer.render_template(template, data)
 
-            # 写缓存
-            if self._disk_cache:
-                try:
-                    self._disk_cache_path(key).write_bytes(img_bytes)
-                except OSError as e:
-                    logger.warning(f"[NeoHelp] 磁盘缓存写入失败: {e}")
-            else:
-                self._image_cache[key] = img_bytes
-            self._render_locks.pop(key, None)
-            return img_bytes
+                # 写缓存
+                if self._disk_cache:
+                    try:
+                        self._disk_cache_path(key).write_bytes(img_bytes)
+                    except OSError as e:
+                        logger.warning(f"[NeoHelp] 磁盘缓存写入失败: {e}")
+                else:
+                    self._image_cache[key] = img_bytes
+                return img_bytes
+            finally:
+                self._render_locks.pop(key, None)
 
     async def _preheat_cache(self):
         """预热缓存（主菜单 + 所有子菜单，普通版 + 管理员版）"""
@@ -235,7 +237,7 @@ class CustomHelpPlugin(Star):
         parts = query.split()
         has_admin_flag = "--admin" in parts
         if has_admin_flag:
-            parts.remove("--admin")
+            parts = [p for p in parts if p != "--admin"]
             query = " ".join(parts)
 
         admin_show_all = getattr(self.config, "admin_show_all", False)
