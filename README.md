@@ -47,7 +47,7 @@
 
 ## 安装
 
-~~在 AstrBot Dashboard 的插件市场中搜索 `NeoHelp` 安装~~（暂未上架）
+在 AstrBot Dashboard 的插件市场中搜索 `NeoHelp` 安装
 
 通过 GitHub 仓库地址安装：
 
