@@ -1,16 +1,22 @@
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import os
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from jinja2 import Environment, select_autoescape
 from playwright.async_api import async_playwright
 
+if TYPE_CHECKING:
+    from playwright.async_api import Browser, Playwright
+
 _env = Environment(autoescape=select_autoescape(default_for_string=True, default=True))
 
-_browser = None
-_playwright_instance = None
+_browser: Browser | None = None
+_playwright_instance: Playwright | None = None
 _lock = asyncio.Lock()
 
 
@@ -20,6 +26,15 @@ async def _get_browser():
     async with _lock:
         if _browser and _browser.is_connected():
             return _browser
+        # 清理旧实例，防止资源泄漏
+        if _browser:
+            with contextlib.suppress(Exception):
+                await _browser.close()
+            _browser = None
+        if _playwright_instance:
+            with contextlib.suppress(Exception):
+                await _playwright_instance.stop()
+            _playwright_instance = None
         _playwright_instance = await async_playwright().start()
         _browser = await _playwright_instance.chromium.launch(
             args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"],
@@ -45,7 +60,7 @@ async def render_template(tmpl_str: str, data: dict) -> bytes:
         try:
             await page.goto(Path(tmp_path).as_uri(), wait_until="networkidle", timeout=_TIMEOUT)
             # 等待网络字体加载完成
-            await page.evaluate("() => document.fonts.ready", timeout=_TIMEOUT)
+            await page.wait_for_function("() => document.fonts.ready", timeout=_TIMEOUT)
             # 从 body 获取实际渲染尺寸（body 宽度由 CSS 变量精确计算）
             dimensions = await page.evaluate(
                 """() => {
@@ -55,8 +70,7 @@ async def render_template(tmpl_str: str, data: dict) -> bytes:
                         width: parseInt(style.width) || body.scrollWidth,
                         height: body.scrollHeight
                     };
-                }""",
-                timeout=_TIMEOUT,
+                }"""
             )
             await page.set_viewport_size({"width": dimensions["width"], "height": dimensions["height"]})
             screenshot = await page.screenshot(full_page=True, type="png", timeout=_TIMEOUT)

@@ -244,8 +244,11 @@ class CustomHelpPlugin(Star):
         removed = 0
         for f in self._cache_dir.iterdir():
             if f.suffix == ".png" and f.stem not in valid_keys:
-                f.unlink(missing_ok=True)
-                removed += 1
+                try:
+                    f.unlink(missing_ok=True)
+                    removed += 1
+                except OSError:
+                    pass
         if removed:
             logger.info(f"[NeoHelp] 清理过期磁盘缓存 {removed} 项")
 
@@ -306,9 +309,11 @@ class CustomHelpPlugin(Star):
 
         # 解析 --admin 标志
         is_admin = self._is_admin(event)
-        has_admin_flag = "--admin" in query
+        parts = query.split()
+        has_admin_flag = "--admin" in parts
         if has_admin_flag:
-            query = query.replace("--admin", "").strip()
+            parts.remove("--admin")
+            query = " ".join(parts)
 
         admin_show_all = getattr(self.config, "admin_show_all", False)
         show_all = is_admin and (has_admin_flag or admin_show_all)
@@ -466,7 +471,7 @@ class CustomHelpPlugin(Star):
                     )
                 )
         elif group_filter:
-            self._extract_group_commands(group_filter, handler, plugin, is_admin, prefix="")
+            self._extract_group_commands(group_filter, plugin, is_admin, prefix="")
 
     @staticmethod
     def _collect_group_handler_ids(group: CommandGroupFilter, ids: set[int]):
@@ -488,7 +493,6 @@ class CustomHelpPlugin(Star):
     def _extract_group_commands(
         self,
         group: CommandGroupFilter,
-        handler: StarHandlerMetadata,
         plugin: PluginInfo,
         parent_admin: bool,
         prefix: str,
@@ -518,7 +522,7 @@ class CustomHelpPlugin(Star):
                     )
                     existing_names.add(full_name)
             elif isinstance(sub, CommandGroupFilter):
-                self._extract_group_commands(sub, handler, plugin, parent_admin, group_prefix)
+                self._extract_group_commands(sub, plugin, parent_admin, group_prefix)
 
     def _apply_overrides(self, plugins: dict[str, PluginInfo]):
         """应用配置中的插件覆盖"""
