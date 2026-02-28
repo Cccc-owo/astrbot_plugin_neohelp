@@ -201,7 +201,7 @@ class CustomHelpPlugin(Star):
     async def _preheat_cache(self):
         """预热缓存（主菜单 + 所有子菜单，普通版 + 管理员版）"""
         # 短暂等待，避免插件更新时双重加载导致重复预热
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
         if self._terminated:
             return
         logger.info("[NeoHelp] 开始缓存预热...")
@@ -215,7 +215,7 @@ class CustomHelpPlugin(Star):
                 await self._preheat_main_menu(show_all, valid_keys)
 
             # 稍微延时后预热所有子菜单
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
             for show_all in (False, True):
                 if self._terminated:
                     return
