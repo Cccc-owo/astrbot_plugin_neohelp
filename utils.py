@@ -4,6 +4,7 @@ from pathlib import Path
 
 from astrbot.api import logger
 
+
 PLUGIN_NAME = "astrbot_plugin_neohelp"
 PLUGIN_DIR = Path(__file__).parent
 TEMPLATES_DIR = PLUGIN_DIR / "templates"

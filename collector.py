@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -244,7 +245,8 @@ class PluginCollector:
             if override.get("description"):
                 p.description = override["description"]
             if "order" in override:
-                p.order = override["order"]
+                with contextlib.suppress(TypeError, ValueError):
+                    p.order = int(override["order"])
             for raw_cmd in override.get("extra_commands", []):
                 cmd = self._parse_pipe_command(raw_cmd)
                 if cmd:
@@ -262,11 +264,16 @@ class PluginCollector:
             if not isinstance(cat, dict) or not cat.get("name"):
                 continue
             cat_name = f"custom_{cat['name']}"
+            raw_order = cat.get("order", 99)
+            try:
+                order = int(raw_order)
+            except (TypeError, ValueError):
+                order = 99
             p = PluginInfo(
                 name=cat_name,
                 display_name=cat["name"],
                 description=cat.get("description", ""),
-                order=cat.get("order", 99),
+                order=order,
             )
             for raw_cmd in cat.get("commands", []):
                 cmd = self._parse_pipe_command(raw_cmd)
@@ -283,7 +290,7 @@ class PluginCollector:
         parts = raw.split("|")
         name = parts[0].strip()
         desc = parts[1].strip() if len(parts) > 1 else ""
-        custom_prefix = parts[2].strip() if len(parts) > 2 else ""
+        custom_prefix = parts[2].strip() if len(parts) > 2 else None
         if not name:
             return None
         return CommandInfo(name=name, description=desc, custom_prefix=custom_prefix)

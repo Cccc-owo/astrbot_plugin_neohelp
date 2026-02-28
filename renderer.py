@@ -13,6 +13,7 @@ from playwright.async_api import async_playwright
 if TYPE_CHECKING:
     from playwright.async_api import Browser, Playwright
 
+
 _env = Environment(autoescape=select_autoescape(default_for_string=True, default=True))
 
 _browser: Browser | None = None

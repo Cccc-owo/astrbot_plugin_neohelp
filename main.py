@@ -121,6 +121,7 @@ class CustomHelpPlugin(Star):
                     logger.warning(f"[NeoHelp] 磁盘缓存写入失败: {e}")
             else:
                 self._image_cache[key] = img_bytes
+            self._render_locks.pop(key, None)
             return img_bytes
 
     async def _preheat_cache(self):
@@ -153,8 +154,6 @@ class CustomHelpPlugin(Star):
                 else:
                     # 内存模式：移除过期缓存
                     self._image_cache = {k: v for k, v in self._image_cache.items() if k in valid_keys}
-                # 清理不再需要的锁
-                self._render_locks = {k: v for k, v in self._render_locks.items() if k in valid_keys}
                 count = len(valid_keys)
                 logger.info(f"[NeoHelp] 缓存预热完成，共 {count} 项")
         except Exception as e:
@@ -215,8 +214,8 @@ class CustomHelpPlugin(Star):
 
     def _is_admin(self, event: AstrMessageEvent) -> bool:
         """判断消息发送者是否为 AstrBot 管理员"""
-        sender_id = event.get_sender_id()
-        admins = self._ctx.get_config().get("admins_id", [])
+        sender_id = str(event.get_sender_id())
+        admins = [str(a) for a in self._ctx.get_config().get("admins_id", [])]
         return sender_id in admins
 
     def _get_wake_prefix(self) -> str:
