@@ -250,7 +250,7 @@ class CustomHelpPlugin(Star):
             )
 
         if query:
-            yield await self._render_sub_menu(event, query, show_all)
+            yield await self._render_sub_menu(event, query, show_all=is_admin)
         else:
             yield await self._render_main_menu(event, show_all)
 
