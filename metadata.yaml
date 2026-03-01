@@ -1,6 +1,6 @@
 name: astrbot_plugin_neohelp # 插件唯一识别名
 display_name: NeoHelp # 用于展示的名字，可以是方便人类阅读的名字（需要版本 >= v4.5.0，低版本不会报错，请放心填写）
 desc: 可选地展示已安装插件命令，渲染为精美的图片帮助菜单。支持高度自定义。
-version: v1.3.0
+version: v1.3.1
 author: Cccc_
 repo: https://github.com/Cccc-owo/astrbot_plugin_neohelp
